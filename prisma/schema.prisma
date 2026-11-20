@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum ModelType {
+  CHAT
+  REASONING
+  CODE
+  MULTIMODAL
+  EMBEDDING
+}
+
+enum BenchmarkCategory {
+  GENERAL
+  CODING
+  REASONING
+  MATH
+  MULTIMODAL
+}
+
+enum ModelStatus {
+  ACTIVE
+  PREVIEW
+  DEPRECATED
+}
+
+model Lab {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  country     String?
+  websiteUrl  String?
+  description String
+  foundedYear Int?
+  models      Model[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([name])
+}
+
+model Provider {
+  id          String          @id @default(cuid())
+  slug        String          @unique
+  name        String
+  websiteUrl  String?
+  docsUrl     String?
+  region      String?
+  description String
+  isAggregator Boolean        @default(false)
+  offerings   ModelProvider[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([name])
+}
+
+model Model {
+  id                      String           @id @default(cuid())
+  slug                    String           @unique
+  name                    String
+  labId                   String
+  lab                     Lab              @relation(fields: [labId], references: [id], onDelete: Cascade)
+  modelType               ModelType        @default(CHAT)
+  status                  ModelStatus      @default(ACTIVE)
+  description             String
+  contextWindow           Int
+  maxOutputTokens         Int?
+  releaseDate             DateTime
+  isOpenWeights           Boolean          @default(false)
+  license                 String?
+  parameterCount          String?
+  architecture            String?
+  defaultInputPricePer1M  Float
+  defaultOutputPricePer1M Float
+  capabilities            String[]
+  modalities              String[]
+  offerings               ModelProvider[]
+  benchmarks              ModelBenchmark[]
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+
+  @@index([labId])
+  @@index([modelType])
+  @@index([releaseDate])
+  @@index([defaultInputPricePer1M])
+  @@index([contextWindow])
+  @@index([isOpenWeights])
+}
+
+model ModelProvider {
+  id                    String   @id @default(cuid())
+  modelId               String
+  providerId            String
+  model                 Model    @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  provider              Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  providerModelId       String
+  inputPricePer1M       Float
+  outputPricePer1M      Float
+  cachedInputPricePer1M Float?
+  latencyMsP50          Int?
+  throughputTps         Float?
+  uptimePct             Float?   @default(99.9)
+  supportsStreaming     Boolean  @default(true)
+  supportsToolCalling   Boolean  @default(true)
+  supportsJsonMode      Boolean  @default(true)
+  endpointUrl           String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@unique([modelId, providerId])
+  @@index([providerId])
+  @@index([inputPricePer1M])
+}
+
+model Benchmark {
+  id          String            @id @default(cuid())
+  slug        String            @unique
+  name        String
+  category    BenchmarkCategory
+  maxScore    Float             @default(100)
+  unit        String            @default("%")
+  description String
+  sourceUrl   String?
+  scores      ModelBenchmark[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([category])
+}
+
+model ModelBenchmark {
+  id              String    @id @default(cuid())
+  modelId         String
+  benchmarkId     String
+  model           Model     @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  benchmark       Benchmark @relation(fields: [benchmarkId], references: [id], onDelete: Cascade)
+  score           Float
+  normalizedScore Float
+  evaluatedAt     DateTime  @default(now())
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([modelId, benchmarkId])
+  @@index([benchmarkId, normalizedScore(sort: Desc)])
+  @@index([modelId])
+}

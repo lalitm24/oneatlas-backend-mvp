@@ -1,0 +1,10 @@
+
+
+# Neon / PostgreSQL connection string (pooled for serverless runtime)
+DATABASE_URL="postgresql://neondb_owner:npg_lbCO0Bt9jpXU@ep-curly-silence-bepob3og-pooler.c-9.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+
+# Direct connection string for Prisma migrations (recommended for Neon)
+DIRECT_URL="postgresql://neondb_owner:npg_lbCO0Bt9jpXU@ep-curly-silence-bepob3og.c-9.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+
+# Optional API key for POST /api/v1/ingest (leave empty in local dev to allow unauthenticated ingestion)
+INGEST_API_KEY=""
