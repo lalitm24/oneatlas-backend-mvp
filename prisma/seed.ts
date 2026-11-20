@@ -887,6 +887,9 @@ async function main() {
     });
 
     for (const off of m.offerings) {
+      const cachedInputPricePer1M =
+        "cachedInputPricePer1M" in off ? off.cachedInputPricePer1M ?? null : null;
+
       await prisma.modelProvider.create({
         data: {
           modelId: model.id,
@@ -894,7 +897,7 @@ async function main() {
           providerModelId: off.providerModelId,
           inputPricePer1M: off.inputPricePer1M,
           outputPricePer1M: off.outputPricePer1M,
-          cachedInputPricePer1M: off.cachedInputPricePer1M ?? null,
+          cachedInputPricePer1M,
           latencyMsP50: off.latencyMsP50 ?? null,
           throughputTps: off.throughputTps ?? null,
           uptimePct: 99.9,
